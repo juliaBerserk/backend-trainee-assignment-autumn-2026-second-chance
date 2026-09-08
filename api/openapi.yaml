@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Avito.Kitchen API
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /health:
+    get:
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/restaurants:
+    get:
+      summary: Список ресторанов
+      parameters:
+        - name: cuisine
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/restaurants/{id}/menu:
+    get:
+      summary: Меню ресторана
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/menu-items/{id}:
+    get:
+      summary: Блюдо + примерное время доставки
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/cart:
+    get:
+      summary: Корзина
+      parameters:
+        - $ref: '#/components/parameters/UserID'
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/cart/items:
+    post:
+      summary: Добавить в корзину
+      parameters:
+        - $ref: '#/components/parameters/UserID'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                menu_item_id: { type: string, format: uuid }
+                quantity: { type: integer }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/cart/items/{id}:
+    delete:
+      summary: Удалить из корзины
+      parameters:
+        - $ref: '#/components/parameters/UserID'
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/orders:
+    post:
+      summary: Оформить заказ (split по ресторанам)
+      parameters:
+        - $ref: '#/components/parameters/UserID'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [delivery_address]
+              properties:
+                delivery_address: { type: string }
+      responses:
+        '201':
+          description: Created
+
+  /api/v1/orders/{id}:
+    get:
+      summary: Статус заказа
+      parameters:
+        - $ref: '#/components/parameters/UserID'
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/restaurant/orders:
+    get:
+      summary: Заказы ресторана
+      parameters:
+        - $ref: '#/components/parameters/RestaurantToken'
+        - name: status
+          in: query
+          schema: { type: string, enum: [new, cooking, delivered] }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/restaurant/orders/{id}/status:
+    patch:
+      summary: Обновить статус
+      parameters:
+        - $ref: '#/components/parameters/RestaurantToken'
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string }
+      responses:
+        '200':
+          description: OK
+
+components:
+  parameters:
+    UserID:
+      name: X-User-ID
+      in: header
+      schema: { type: string, format: uuid }
+    RestaurantToken:
+      name: X-Restaurant-Token
+      in: header
+      required: true
+      schema: { type: string }
